@@ -11,7 +11,6 @@
         .counter-box { background: #2c2c2c; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 16px; border: 1px solid #444; }
         .counter-box span { color: #4CAF50; font-weight: bold; font-size: 20px; }
         button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; color: #fff; }
-        .btn-auto { background: #ff5722; }
         .btn-on { background: #4CAF50; }
         .btn-off { background: #f44336; }
         .btn-strobe { background: #2196F3; }
@@ -27,7 +26,6 @@
             👥 Aktif Katılımcı: <span id="client-count">0</span>
         </div>
         
-        <button class="btn-auto" onclick="startAutomatedShow()">🚀 Kızılderili Marşı Şovunu Başlat</button>
         <button class="btn-on" onclick="sendAction('ON')">Ekranları Aç (ON)</button>
         <button class="btn-off" onclick="sendAction('OFF')">Ekranları Kapat (OFF)</button>
         <button class="btn-strobe" onclick="sendAction('STROBE')">Ritim Çakar (STROBE)</button>
@@ -66,35 +64,6 @@
             document.getElementById('client-count').innerText = activeCount;
         });
 
-        // "Kızılderili Savaş Marşı" İçin Özel Konser Zaman Çizelgesi
-        const kizilderiliMarshiTimeline = [
-            { timeOffset: 0,      action: 'PULSE',  speed: 0   }, // 00:00 - Giriş davulları (Kalp Atışı)
-            { timeOffset: 26000,  action: 'ON',     speed: 0   }, // 00:26 - "Oooo" vokalleri (Sabit Beyaz Işık)
-            { timeOffset: 44000,  action: 'STROBE', speed: 90  }, // 00:44 - Marş patlıyor! (Hızlı Çakar)
-            { timeOffset: 140000, action: 'PULSE',  speed: 0   }, // 02:20 - Final yaklaşırken nefes efekti
-            { timeOffset: 145000, action: 'OFF',    speed: 0   }  // Bitiş (Karartma)
-        ];
-
-        window.startAutomatedShow = async function() {
-            const logEl = document.getElementById('log');
-            // 1.5 saniye sonrasını ortak başlangıç saati olarak belirle
-            const showStartTime = Date.now() + 1500; 
-            
-            try {
-                await setDoc(doc(db, "show", "command"), {
-                    startTime: showStartTime,
-                    timeline: kizilderiliMarshiTimeline,
-                    triggerId: Math.random()
-                });
-                logEl.innerText = "Kızılderili Marşı Şovu Başlatıldı!";
-                logEl.style.color = "#ff5722";
-            } catch (err) {
-                console.error(err);
-                logEl.innerText = "Hata! Şov başlatılamadı.";
-                logEl.style.color = "#f44336";
-            }
-        };
-
         window.sendAction = async function(actionName) {
             const logEl = document.getElementById('log');
             try {
@@ -103,13 +72,13 @@
                     startTime: Date.now(),
                     speed: 110,
                     triggerId: Math.random(),
-                    timeline: null // Manuel komut gönderildiğinde timeline'ı sıfırla
+                    timeline: null
                 });
-                logEl.innerText = `Manuel Komut: ${actionName}`;
+                logEl.innerText = `Komut Gönderildi: ${actionName}`;
                 logEl.style.color = "#4CAF50";
             } catch (err) {
                 console.error(err);
-                logEl.innerText = "Hata!";
+                logEl.innerText = "Hata! Komut iletilemedi.";
                 logEl.style.color = "#f44336";
             }
         };
