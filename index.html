@@ -27,7 +27,7 @@
             👥 Aktif Katılımcı: <span id="client-count">0</span>
         </div>
         
-        <button class="btn-auto" onclick="startAutomatedShow()">🚀 Otomatik Şov Başlat (Timeline)</button>
+        <button class="btn-auto" onclick="startAutomatedShow()">🚀 Kızılderili Marşı Şovunu Başlat</button>
         <button class="btn-on" onclick="sendAction('ON')">Ekranları Aç (ON)</button>
         <button class="btn-off" onclick="sendAction('OFF')">Ekranları Kapat (OFF)</button>
         <button class="btn-strobe" onclick="sendAction('STROBE')">Ritim Çakar (STROBE)</button>
@@ -53,6 +53,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Canlı aktif katılımcı sayacı (Son 15 saniyede sinyal verenler)
         onSnapshot(collection(db, "clients"), (snapshot) => {
             let activeCount = 0;
             const now = Date.now();
@@ -65,30 +66,31 @@
             document.getElementById('client-count').innerText = activeCount;
         });
 
-        // Şarkının saniye saniye test senaryosu (milisaniye cinsinden ofsetler)
-        const sampleTimeline = [
-            { timeOffset: 0,     action: 'PULSE',  speed: 0 },   // 0. saniye: Nefes efekti başla
-            { timeOffset: 6000,  action: 'ON',     speed: 0 },   // 6. saniye: Sabit beyaz ışık
-            { timeOffset: 12000, action: 'STROBE', speed: 80 },  // 12. saniye: Hızlı çakar
-            { timeOffset: 20000, action: 'OFF',    speed: 0 }    // 20. saniye: Karartma ve bitiş
+        // "Kızılderili Savaş Marşı" İçin Özel Konser Zaman Çizelgesi
+        const kizilderiliMarshiTimeline = [
+            { timeOffset: 0,      action: 'PULSE',  speed: 0   }, // 00:00 - Giriş davulları (Kalp Atışı)
+            { timeOffset: 26000,  action: 'ON',     speed: 0   }, // 00:26 - "Oooo" vokalleri (Sabit Beyaz Işık)
+            { timeOffset: 44000,  action: 'STROBE', speed: 90  }, // 00:44 - Marş patlıyor! (Hızlı Çakar)
+            { timeOffset: 140000, action: 'PULSE',  speed: 0   }, // 02:20 - Final yaklaşırken nefes efekti
+            { timeOffset: 145000, action: 'OFF',    speed: 0   }  // Bitiş (Karartma)
         ];
 
         window.startAutomatedShow = async function() {
             const logEl = document.getElementById('log');
-            // 1.5 saniye sonrasını ortak başlangıç saati olarak belirle (ağ gecikmesini tolere etmek için)
+            // 1.5 saniye sonrasını ortak başlangıç saati olarak belirle
             const showStartTime = Date.now() + 1500; 
             
             try {
                 await setDoc(doc(db, "show", "command"), {
                     startTime: showStartTime,
-                    timeline: sampleTimeline,
+                    timeline: kizilderiliMarshiTimeline,
                     triggerId: Math.random()
                 });
-                logEl.innerText = "Otomatik Şov Senaryosu Gönderildi!";
+                logEl.innerText = "Kızılderili Marşı Şovu Başlatıldı!";
                 logEl.style.color = "#ff5722";
             } catch (err) {
                 console.error(err);
-                logEl.innerText = "Hata! Otomatik şov başlatılamadı.";
+                logEl.innerText = "Hata! Şov başlatılamadı.";
                 logEl.style.color = "#f44336";
             }
         };
@@ -101,7 +103,7 @@
                     startTime: Date.now(),
                     speed: 110,
                     triggerId: Math.random(),
-                    timeline: null // Tekil komut için timeline'ı sıfırla
+                    timeline: null // Manuel komut gönderildiğinde timeline'ı sıfırla
                 });
                 logEl.innerText = `Manuel Komut: ${actionName}`;
                 logEl.style.color = "#4CAF50";
