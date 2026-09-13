@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>FlashBeat - Yönetici Paneli</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #111; color: #fff; text-align: center; padding: 50px; }
+        .panel { max-width: 400px; margin: 0 auto; background: #222; padding: 30px; border-radius: 12px; }
+        button { width: 100%; padding: 15px; margin: 10px 0; font-size: 18px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; color: #fff; }
+        .on { background: #4CAF50; }
+        .off { background: #f44336; }
+        .strobe { background: #9c27b0; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h2>🎛️ Admin Kontrol Paneli</h2>
+        <button class="on" onclick="sendCommand('ON')">Flaşı Aç</button>
+        <button class="off" onclick="sendCommand('OFF')">Flaşı Kapat</button>
+        <button class="strobe" onclick="sendCommand('STROBE', 100)">Hızlı Ritim (Strobe)</button>
+        <button class="strobe" onclick="sendCommand('STROBE', 300)" style="background:#673ab7;">Yavaş Ritim</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDntqYxoZXhJZmxtbGaPOF54EEW0F1Co8",
+            authDomain: "lumensync-brssvn.firebaseapp.com",
+            projectId: "lumensync-brssvn",
+            storageBucket: "lumensync-brssvn.firebasestorage.app",
+            messagingSenderId: "295249691227",
+            appId: "1:295249691227:web:a394942537af7b98f5357e",
+            measurementId: "G-K75JNFBH3V",
+            databaseURL: "https://lumensync-brssvn-default-rtdb.europe-west1.firebasedatabase.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.sendCommand = function(action, speed = 150) {
+            set(ref(db, 'show/command'), {
+                action: action,
+                speed: speed,
+                timestamp: Date.now()
+            }).then(() => {
+                console.log("Komut gönderildi: " + action);
+            });
+        };
+    </script>
+</body>
+</html>
