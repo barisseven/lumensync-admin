@@ -11,11 +11,11 @@
         .counter-box { background: #2c2c2c; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 16px; border: 1px solid #444; }
         .counter-box span { color: #4CAF50; font-weight: bold; font-size: 20px; }
         button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; color: #fff; }
-        .btn-start { background: #9c27b0; }
+        .btn-auto { background: #ff5722; }
         .btn-on { background: #4CAF50; }
         .btn-off { background: #f44336; }
         .btn-strobe { background: #2196F3; }
-        .btn-pulse { background: #e91e63; } /* Kalp atışı / Nefes */
+        .btn-pulse { background: #e91e63; }
         #log { margin-top: 10px; font-size: 14px; color: #aaa; }
     </style>
 </head>
@@ -27,11 +27,11 @@
             👥 Aktif Katılımcı: <span id="client-count">0</span>
         </div>
         
-        <button class="btn-start" onclick="startMusicSync()">🎵 Timecode Strobe Başlat</button>
+        <button class="btn-auto" onclick="startAutomatedShow()">🚀 Otomatik Şov Başlat (Timeline)</button>
         <button class="btn-on" onclick="sendAction('ON')">Ekranları Aç (ON)</button>
         <button class="btn-off" onclick="sendAction('OFF')">Ekranları Kapat (OFF)</button>
         <button class="btn-strobe" onclick="sendAction('STROBE')">Ritim Çakar (STROBE)</button>
-        <button class="btn-pulse" onclick="sendAction('PULSE')">💓 Kalp Atışı / Nefes Efekti</button>
+        <button class="btn-pulse" onclick="sendAction('PULSE')">💓 Kalp Atışı / Nefes</button>
         
         <div id="log">Durum: Bekleniyor...</div>
     </div>
@@ -53,7 +53,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Canlı akıllı sayaç (Son 15 saniyede sinyal verenler)
         onSnapshot(collection(db, "clients"), (snapshot) => {
             let activeCount = 0;
             const now = Date.now();
@@ -66,22 +65,30 @@
             document.getElementById('client-count').innerText = activeCount;
         });
 
-        window.startMusicSync = async function() {
+        // Şarkının saniye saniye test senaryosu (milisaniye cinsinden ofsetler)
+        const sampleTimeline = [
+            { timeOffset: 0,     action: 'PULSE',  speed: 0 },   // 0. saniye: Nefes efekti başla
+            { timeOffset: 6000,  action: 'ON',     speed: 0 },   // 6. saniye: Sabit beyaz ışık
+            { timeOffset: 12000, action: 'STROBE', speed: 80 },  // 12. saniye: Hızlı çakar
+            { timeOffset: 20000, action: 'OFF',    speed: 0 }    // 20. saniye: Karartma ve bitiş
+        ];
+
+        window.startAutomatedShow = async function() {
             const logEl = document.getElementById('log');
-            const musicStartTime = Date.now() + 600; 
+            // 1.5 saniye sonrasını ortak başlangıç saati olarak belirle (ağ gecikmesini tolere etmek için)
+            const showStartTime = Date.now() + 1500; 
             
             try {
                 await setDoc(doc(db, "show", "command"), {
-                    action: 'STROBE',
-                    startTime: musicStartTime,
-                    speed: 110,
+                    startTime: showStartTime,
+                    timeline: sampleTimeline,
                     triggerId: Math.random()
                 });
-                logEl.innerText = "Timecode Ritim Başlatıldı!";
-                logEl.style.color = "#9c27b0";
+                logEl.innerText = "Otomatik Şov Senaryosu Gönderildi!";
+                logEl.style.color = "#ff5722";
             } catch (err) {
                 console.error(err);
-                logEl.innerText = "Hata! Komut gidemedi.";
+                logEl.innerText = "Hata! Otomatik şov başlatılamadı.";
                 logEl.style.color = "#f44336";
             }
         };
@@ -93,13 +100,14 @@
                     action: actionName,
                     startTime: Date.now(),
                     speed: 110,
-                    triggerId: Math.random()
+                    triggerId: Math.random(),
+                    timeline: null // Tekil komut için timeline'ı sıfırla
                 });
-                logEl.innerText = `Komut Gönderildi: ${actionName}`;
+                logEl.innerText = `Manuel Komut: ${actionName}`;
                 logEl.style.color = "#4CAF50";
             } catch (err) {
                 console.error(err);
-                logEl.innerText = "Hata! Komut iletilemedi.";
+                logEl.innerText = "Hata!";
                 logEl.style.color = "#f44336";
             }
         };
