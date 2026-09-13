@@ -10,6 +10,11 @@
         h2 { color: #ff9800; margin-bottom: 10px; }
         .counter-box { background: #2c2c2c; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 16px; border: 1px solid #444; }
         .counter-box span { color: #4CAF50; font-weight: bold; font-size: 20px; }
+        
+        .color-picker-box { background: #2c2c2c; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #444; }
+        .color-picker-box label { font-size: 15px; font-weight: bold; }
+        input[type="color"] { width: 50px; height: 35px; border: none; border-radius: 6px; cursor: pointer; background: none; }
+
         button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; color: #fff; }
         .btn-on { background: #4CAF50; }
         .btn-off { background: #f44336; }
@@ -25,11 +30,16 @@
         <div class="counter-box">
             👥 Aktif Katılımcı: <span id="client-count">0</span>
         </div>
+
+        <div class="color-picker-box">
+            <label>🎨 Efekt Rengi:</label>
+            <input type="color" id="effectColor" value="#ffffff">
+        </div>
         
-        <button class="btn-on" onclick="sendAction('ON')">Ekranları Aç (ON)</button>
+        <button class="btn-on" onclick="sendAction('ON')">Işığı Aç (Seçilen Renk)</button>
         <button class="btn-off" onclick="sendAction('OFF')">Ekranları Kapat (OFF)</button>
-        <button class="btn-strobe" onclick="sendAction('STROBE')">Ritim Çakar (STROBE)</button>
-        <button class="btn-pulse" onclick="sendAction('PULSE')">💓 Kalp Atışı / Nefes</button>
+        <button class="btn-strobe" onclick="sendAction('STROBE')">Renkli Çakar (STROBE)</button>
+        <button class="btn-pulse" onclick="sendAction('PULSE')">💓 Renkli Nefes (PULSE)</button>
         
         <div id="log">Durum: Bekleniyor...</div>
     </div>
@@ -51,7 +61,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Canlı aktif katılımcı sayacı (Son 15 saniyede sinyal verenler)
         onSnapshot(collection(db, "clients"), (snapshot) => {
             let activeCount = 0;
             const now = Date.now();
@@ -66,15 +75,17 @@
 
         window.sendAction = async function(actionName) {
             const logEl = document.getElementById('log');
+            const selectedColor = document.getElementById('effectColor').value;
+
             try {
                 await setDoc(doc(db, "show", "command"), {
                     action: actionName,
+                    color: selectedColor,
                     startTime: Date.now(),
                     speed: 110,
-                    triggerId: Math.random(),
-                    timeline: null
+                    triggerId: Math.random()
                 });
-                logEl.innerText = `Komut Gönderildi: ${actionName}`;
+                logEl.innerText = `Komut Gönderildi: ${actionName} (${selectedColor})`;
                 logEl.style.color = "#4CAF50";
             } catch (err) {
                 console.error(err);
