@@ -52,29 +52,21 @@
         const db = getFirestore(app);
 
         // Katılımcı sayısını canlı dinle
+        // Katılımcı sayısını ve son görülme süresini canlı dinle
         onSnapshot(collection(db, "clients"), (snapshot) => {
-            document.getElementById('client-count').innerText = snapshot.size;
-        });
+        let activeCount = 0;
+        const now = Date.now();
 
-        window.startMusicSync = async function() {
-            const logEl = document.getElementById('log');
-            const musicStartTime = Date.now() + 600; 
-            
-            try {
-                await setDoc(doc(db, "show", "command"), {
-                    action: 'STROBE',
-                    startTime: musicStartTime,
-                    speed: 110,
-                    triggerId: Math.random()
-                });
-                logEl.innerText = "Timecode Ritim Başlatıldı!";
-                logEl.style.color = "#9c27b0";
-            } catch (err) {
-                console.error(err);
-                logEl.innerText = "Hata! Komut gidemedi.";
-                logEl.style.color = "#f44336";
-            }
-        };
+    snapshot.forEach((doc) => {
+        const data = doc.data();
+        // Son 15 saniye içinde sinyal (heartbeat) gönderdiyse aktif say
+        if (data.lastSeen && (now - data.lastSeen < 15000)) {
+            activeCount++;
+        }
+    });
+
+    document.getElementById('client-count').innerText = activeCount;
+});
 
         window.sendAction = async function(actionName) {
             const logEl = document.getElementById('log');
