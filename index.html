@@ -2,28 +2,35 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>LumenSync - Yönetici Paneli</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashBeat - Yönetici Paneli</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #111; color: #fff; text-align: center; padding: 50px; }
-        .panel { max-width: 400px; margin: 0 auto; background: #222; padding: 30px; border-radius: 12px; }
-        button { width: 100%; padding: 15px; margin: 10px 0; font-size: 18px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; color: #fff; }
-        .on { background: #4CAF50; }
-        .off { background: #f44336; }
-        .strobe { background: #9c27b0; }
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 30px 20px; margin: 0; }
+        .container { max-width: 400px; margin: 0 auto; background: #1e1e1e; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2 { margin-bottom: 20px; color: #ff9800; }
+        button { width: 100%; padding: 15px; font-size: 18px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 12px; color: #fff; transition: opacity 0.2s; }
+        button:active { opacity: 0.8; }
+        .btn-on { background: #4CAF50; }
+        .btn-off { background: #f44336; }
+        .btn-strobe { background: #2196F3; }
+        #log { margin-top: 15px; font-size: 14px; color: #aaa; }
     </style>
 </head>
 <body>
-    <div class="panel">
-        <h2>🎛️ Admin Kontrol Paneli</h2>
-        <button class="on" onclick="sendCommand('ON')">Flaşı Aç</button>
-        <button class="off" onclick="sendCommand('OFF')">Flaşı Kapat</button>
-        <button class="strobe" onclick="sendCommand('STROBE', 100)">Hızlı Ritim (Strobe)</button>
-        <button class="strobe" onclick="sendCommand('STROBE', 300)" style="background:#673ab7;">Yavaş Ritim</button>
+    <div class="container">
+        <h2>🎛️ FlashBeat Admin</h2>
+        <p>Konser Flaş Kontrol Paneli</p>
+        
+        <button class="btn-on" onclick="sendCommand('ON')">Flaşları Aç (ON)</button>
+        <button class="btn-off" onclick="sendCommand('OFF')">Flaşları Kapat (OFF)</button>
+        <button class="btn-strobe" onclick="sendCommand('STROBE')">Çakar / Ritim (STROBE)</button>
+        
+        <div id="log">Durum: Komut bekleniyor...</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDntqYxoZXhJZmxtbGaPOF54EEW0F1Co8",
@@ -32,21 +39,28 @@
             storageBucket: "lumensync-brssvn.firebasestorage.app",
             messagingSenderId: "295249691227",
             appId: "1:295249691227:web:a394942537af7b98f5357e",
-            measurementId: "G-K75JNFBH3V",
-            databaseURL: "https://lumensync-brssvn-default-rtdb.europe-west1.firebasedatabase.app"
+            measurementId: "G-K75JNFBH3V"
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        const db = getFirestore(app);
 
-        window.sendCommand = function(action, speed = 150) {
-            set(ref(db, 'show/command'), {
-                action: action,
-                speed: speed,
-                timestamp: Date.now()
-            }).then(() => {
-                console.log("Komut gönderildi: " + action);
-            });
+        window.sendCommand = async function(actionType) {
+            const logEl = document.getElementById('log');
+            try {
+                // Firestore 'show/command' belgesini günceller
+                await setDoc(doc(db, "show", "command"), {
+                    action: actionType,
+                    speed: 120, // Çakar hızı (milisaniye cinsinden)
+                    timestamp: Date.now()
+                });
+                logEl.innerText = "Komut Gönderildi: " + actionType;
+                logEl.style.color = "#4CAF50";
+            } catch (error) {
+                console.error("Hata:", error);
+                logEl.innerText = "Hata oluştu! Komut gidemedi.";
+                logEl.style.color = "#f44336";
+            }
         };
     </script>
 </body>
