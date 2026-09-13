@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumen Sync - Yönetici Paneli</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px 20px; margin: 0; }
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px; margin: 0; }
         .container { max-width: 400px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         h2 { color: #ff9800; margin-bottom: 10px; }
         .counter-box { background: #2c2c2c; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 16px; border: 1px solid #444; }
@@ -16,6 +16,7 @@
         input[type="color"] { width: 50px; height: 35px; border: none; border-radius: 6px; cursor: pointer; background: none; }
 
         button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; color: #fff; }
+        .btn-timeline { background: #ff5722; }
         .btn-on { background: #4CAF50; }
         .btn-off { background: #f44336; }
         .btn-strobe { background: #2196F3; }
@@ -32,11 +33,12 @@
         </div>
 
         <div class="color-picker-box">
-            <label>🎨 Efekt Rengi:</label>
+            <label>🎨 Varsayılan Renk:</label>
             <input type="color" id="effectColor" value="#ffffff">
         </div>
         
-        <button class="btn-on" onclick="sendAction('ON')">Işığı Aç (Seçilen Renk)</button>
+        <button class="btn-timeline" onclick="startOptimizedShow()">🚀 Optimize Şovu Başlat (Pre-load)</button>
+        <button class="btn-on" onclick="sendAction('ON')">Işığı Aç (ON)</button>
         <button class="btn-off" onclick="sendAction('OFF')">Ekranları Kapat (OFF)</button>
         <button class="btn-strobe" onclick="sendAction('STROBE')">Renkli Çakar (STROBE)</button>
         <button class="btn-pulse" onclick="sendAction('PULSE')">💓 Renkli Nefes (PULSE)</button>
@@ -73,23 +75,54 @@
             document.getElementById('client-count').innerText = activeCount;
         });
 
+        // Optimize edilmiş örnek şov senaryosu (Önceden cihazlara yüklenir)
+        const optimizedTimeline = [
+            { timeOffset: 0,     action: 'PULSE',  color: '#ff9800', speed: 0   },
+            { timeOffset: 8000,  action: 'ON',     color: '#ffffff', speed: 0   },
+            { timeOffset: 15000, action: 'STROBE', color: '#2196F3', speed: 70  },
+            { timeOffset: 25000, action: 'OFF',    color: '#000000', speed: 0   }
+        ];
+
+        window.startOptimizedShow = async function() {
+            const logEl = document.getElementById('log');
+            // 2 saniye sonrasını ortak başlangıç saati yap (Cihazların şovu önceden belleğe alması için zaman tanır)
+            const showStartTime = Date.now() + 2000; 
+
+            try {
+                // Önce timeline verisini kaydedip cihazların belleğine pre-load yaptırıyoruz
+                await setDoc(doc(db, "show", "command"), {
+                    type: 'TIMELINE_PRELOAD',
+                    timeline: optimizedTimeline,
+                    startTime: showStartTime,
+                    triggerId: Math.random()
+                });
+                logEl.innerText = "Optimize Şov Komutu Dağıtıldı!";
+                logEl.style.color = "#ff5722";
+            } catch (err) {
+                console.error(err);
+                logEl.innerText = "Hata! Şov başlatılamadı.";
+                logEl.style.color = "#f44336";
+            }
+        };
+
         window.sendAction = async function(actionName) {
             const logEl = document.getElementById('log');
             const selectedColor = document.getElementById('effectColor').value;
 
             try {
                 await setDoc(doc(db, "show", "command"), {
+                    type: 'MANUAL',
                     action: actionName,
                     color: selectedColor,
                     startTime: Date.now(),
                     speed: 110,
                     triggerId: Math.random()
                 });
-                logEl.innerText = `Komut Gönderildi: ${actionName} (${selectedColor})`;
+                logEl.innerText = `Manuel Komut: ${actionName}`;
                 logEl.style.color = "#4CAF50";
             } catch (err) {
                 console.error(err);
-                logEl.innerText = "Hata! Komut iletilemedi.";
+                logEl.innerText = "Hata!";
                 logEl.style.color = "#f44336";
             }
         };
