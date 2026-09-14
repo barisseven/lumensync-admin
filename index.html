@@ -16,7 +16,6 @@
         input[type="color"] { width: 50px; height: 35px; border: none; border-radius: 6px; cursor: pointer; background: none; }
 
         button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; color: #fff; }
-        .btn-timeline { background: #ff5722; }
         .btn-on { background: #4CAF50; }
         .btn-off { background: #f44336; }
         .btn-strobe { background: #2196F3; }
@@ -33,11 +32,10 @@
         </div>
 
         <div class="color-picker-box">
-            <label>🎨 Varsayılan Renk:</label>
+            <label>🎨 Efekt Rengi:</label>
             <input type="color" id="effectColor" value="#ffffff">
         </div>
         
-        <button class="btn-timeline" onclick="startOptimizedShow()">🚀 Optimize Şovu Başlat (Pre-load)</button>
         <button class="btn-on" onclick="sendAction('ON')">Işığı Aç (ON)</button>
         <button class="btn-off" onclick="sendAction('OFF')">Ekranları Kapat (OFF)</button>
         <button class="btn-strobe" onclick="sendAction('STROBE')">Renkli Çakar (STROBE)</button>
@@ -75,54 +73,23 @@
             document.getElementById('client-count').innerText = activeCount;
         });
 
-        // Optimize edilmiş örnek şov senaryosu (Önceden cihazlara yüklenir)
-        const optimizedTimeline = [
-            { timeOffset: 0,     action: 'PULSE',  color: '#ff9800', speed: 0   },
-            { timeOffset: 8000,  action: 'ON',     color: '#ffffff', speed: 0   },
-            { timeOffset: 15000, action: 'STROBE', color: '#2196F3', speed: 70  },
-            { timeOffset: 25000, action: 'OFF',    color: '#000000', speed: 0   }
-        ];
-
-        window.startOptimizedShow = async function() {
-            const logEl = document.getElementById('log');
-            // 2 saniye sonrasını ortak başlangıç saati yap (Cihazların şovu önceden belleğe alması için zaman tanır)
-            const showStartTime = Date.now() + 2000; 
-
-            try {
-                // Önce timeline verisini kaydedip cihazların belleğine pre-load yaptırıyoruz
-                await setDoc(doc(db, "show", "command"), {
-                    type: 'TIMELINE_PRELOAD',
-                    timeline: optimizedTimeline,
-                    startTime: showStartTime,
-                    triggerId: Math.random()
-                });
-                logEl.innerText = "Optimize Şov Komutu Dağıtıldı!";
-                logEl.style.color = "#ff5722";
-            } catch (err) {
-                console.error(err);
-                logEl.innerText = "Hata! Şov başlatılamadı.";
-                logEl.style.color = "#f44336";
-            }
-        };
-
         window.sendAction = async function(actionName) {
             const logEl = document.getElementById('log');
             const selectedColor = document.getElementById('effectColor').value;
 
             try {
                 await setDoc(doc(db, "show", "command"), {
-                    type: 'MANUAL',
                     action: actionName,
                     color: selectedColor,
                     startTime: Date.now(),
                     speed: 110,
                     triggerId: Math.random()
                 });
-                logEl.innerText = `Manuel Komut: ${actionName}`;
+                logEl.innerText = `Komut Gönderildi: ${actionName} (${selectedColor})`;
                 logEl.style.color = "#4CAF50";
             } catch (err) {
                 console.error(err);
-                logEl.innerText = "Hata!";
+                logEl.innerText = "Hata! Komut iletilemedi.";
                 logEl.style.color = "#f44336";
             }
         };
