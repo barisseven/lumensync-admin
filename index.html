@@ -6,21 +6,20 @@
     <title>Lumen Sync - Yönetici Paneli</title>
     <style>
         body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px; margin: 0; }
-        .container { max-width: 400px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .container { max-width: 450px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         h2 { color: #ff9800; margin-bottom: 10px; }
         .counter-box { background: #2c2c2c; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 16px; border: 1px solid #444; }
         .counter-box span { color: #4CAF50; font-weight: bold; font-size: 20px; }
         
-        .color-picker-box { background: #2c2c2c; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #444; }
-        .color-picker-box label { font-size: 15px; font-weight: bold; }
-        input[type="color"] { width: 50px; height: 35px; border: none; border-radius: 6px; cursor: pointer; background: none; }
-
+        .control-group { background: #2c2c2c; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: left; border: 1px solid #444; }
+        .control-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #ccc; }
+        input[type="color"], select, input[type="number"] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #555; background: #1e1e1e; color: #fff; box-sizing: border-box; margin-bottom: 10px; }
+        
         button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; color: #fff; }
-        .btn-on { background: #4CAF50; }
-        .btn-off { background: #f44336; }
-        .btn-strobe { background: #2196F3; }
-        .btn-pulse { background: #e91e63; }
-        #log { margin-top: 10px; font-size: 14px; color: #aaa; }
+        .btn-preload { background: #ff5722; }
+        .btn-manual { background: #4CAF50; }
+        .btn-stop { background: #f44336; }
+        #log { margin-top: 10px; font-size: 14px; color: #aaa; word-break: break-word; }
     </style>
 </head>
 <body>
@@ -31,15 +30,25 @@
             👥 Aktif Katılımcı: <span id="client-count">0</span>
         </div>
 
-        <div class="color-picker-box">
-            <label>🎨 Efekt Rengi:</label>
-            <input type="color" id="effectColor" value="#ffffff">
+        <div class="control-group">
+            <label>🎨 Efekt Rengi (HEX / RGB / RGBA):</label>
+            <input type="text" id="effectColor" value="rgb(255, 0, 0)">
+
+            <label>⚡ Manuel Komut / Başlangıç Aksiyonu:</label>
+            <select id="manualAction">
+                <option value="ON">ON (Işığı Aç)</option>
+                <option value="OFF">OFF (Kapat)</option>
+                <option value="STROBE" selected>STROBE (Çakar)</option>
+                <option value="PULSE">PULSE (Nefes)</option>
+            </select>
+
+            <label>⏱️ Hız / Speed (Strobe için ms, örn: 80):</label>
+            <input type="number" id="effectSpeed" value="80" min="16" max="5000">
         </div>
         
-        <button class="btn-on" onclick="sendAction('ON')">Işığı Aç (ON)</button>
-        <button class="btn-off" onclick="sendAction('OFF')">Ekranları Kapat (OFF)</button>
-        <button class="btn-strobe" onclick="sendAction('STROBE')">Renkli Çakar (STROBE)</button>
-        <button class="btn-pulse" onclick="sendAction('PULSE')">💓 Renkli Nefes (PULSE)</button>
+        <button class="btn-manual" onclick="sendManualCommand()">Manuel Komut Gönder</button>
+        <button class="btn-preload" onclick="sendTimelineShow()">🚀 Şov Senaryosunu Başlat (Timeline)</button>
+        <button class="btn-stop" onclick="sendEmergencyStop()">Acil Karartma (STOP)</button>
         
         <div id="log">Durum: Bekleniyor...</div>
     </div>
@@ -74,23 +83,74 @@
             document.getElementById('client-count').innerText = activeCount;
         });
 
-        window.sendAction = async function(actionName) {
+        // 1. Manuel Anlık Komut Gönderme
+        window.sendManualCommand = async function() {
             const logEl = document.getElementById('log');
-            const selectedColor = document.getElementById('effectColor').value;
+            const color = document.getElementById('effectColor').value;
+            const action = document.getElementById('manualAction').value;
+            const speed = Number(document.getElementById('effectSpeed').value);
 
             try {
                 await setDoc(doc(db, "show", "command"), {
-                    action: actionName,
-                    color: selectedColor,
-                    startTime: Date.now(),
-                    speed: 110,
-                    triggerId: Math.random()
+                    triggerId: crypto.randomUUID(),
+                    startTime: Date.now() + 2000, // 2 saniye sonra senkronize başlar
+                    action: action,
+                    color: color,
+                    speed: speed
                 });
-                logEl.innerText = `Komut Gönderildi: ${actionName} (${selectedColor})`;
+                logEl.innerText = `Manuel Komut Gönderildi: ${action} (${color})`;
                 logEl.style.color = "#4CAF50";
             } catch (err) {
                 console.error(err);
                 logEl.innerText = "Hata! Komut iletilemedi.";
+                logEl.style.color = "#f44336";
+            }
+        };
+
+        // 2. Önceden Yüklenen Şov Senaryosu (Timeline) Gönderme
+        window.sendTimelineShow = async function() {
+            const logEl = document.getElementById('log');
+            
+            // Katılımcıların senaryoyu indirip hazır olması için 3 saniye geleceğe planlıyoruz
+            const showStartTime = Date.now() + 3000;
+
+            const sampleTimeline = [
+                { timeOffset: 0,     action: 'ON',     color: '#ff0000' },
+                { timeOffset: 5000,  action: 'STROBE', color: '#ffffff', speed: 80 },
+                { timeOffset: 12000, action: 'PULSE',  color: '#0000ff' },
+                { timeOffset: 20000, action: 'OFF',    color: '#000000' }
+            ];
+
+            try {
+                await setDoc(doc(db, "show", "command"), {
+                    triggerId: crypto.randomUUID(),
+                    startTime: showStartTime,
+                    duration: 25000, // 25 saniye toplam şov süresi
+                    timeline: sampleTimeline
+                });
+                logEl.innerText = "Şov Senaryosu (Timeline) Tüm Cihazlara Dağıtıldı!";
+                logEl.style.color = "#ff5722";
+            } catch (err) {
+                console.error(err);
+                logEl.innerText = "Hata! Senaryo gönderilemedi.";
+                logEl.style.color = "#f44336";
+            }
+        };
+
+        // 3. Acil Durdurma (STOP) Komutu
+        window.sendEmergencyStop = async function() {
+            const logEl = document.getElementById('log');
+            try {
+                await setDoc(doc(db, "show", "command"), {
+                    type: 'STOP',
+                    triggerId: crypto.randomUUID(),
+                    startTime: Date.now()
+                });
+                logEl.innerText = "Acil Karartma (STOP) Gönderildi!";
+                logEl.style.color = "#f44336";
+            } catch (err) {
+                console.error(err);
+                logEl.innerText = "Hata! Durdurulamadı.";
                 logEl.style.color = "#f44336";
             }
         };
