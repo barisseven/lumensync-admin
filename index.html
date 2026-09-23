@@ -65,7 +65,7 @@
             color: #8b949e; 
         }
 
-        /* Renk seçiciyi gizleyip butona tıklatıyoruz */
+        /* Renk seçici buton tasarımı */
         .color-btn-wrapper {
             position: relative;
             overflow: hidden;
@@ -96,7 +96,7 @@
             cursor: pointer;
         }
 
-        select, input[type="number"] { 
+        input[type="number"] { 
             width: 100%; 
             padding: 10px 12px; 
             border-radius: 6px; 
@@ -105,12 +105,9 @@
             color: #c9d1d9; 
             font-size: 14px;
             box-sizing: border-box; 
-            margin-bottom: 14px; 
             outline: none;
-            appearance: none;
-            -webkit-appearance: none;
         }
-        select:focus, input[type="number"]:focus { border-color: #58a6ff; }
+        input[type="number"]:focus { border-color: #58a6ff; }
 
         button { 
             width: 100%; 
@@ -158,24 +155,20 @@
         <div class="control-group">
             <label>🎨 Efekt Rengi (Tıkla ve Seç):</label>
             <div class="color-btn-wrapper">
-                <button type="button" id="colorBtn" class="color-preview-btn">Seçilen Renk: #ff0000</button>
+                <button type="button" id="colorBtn" class="color-preview-btn" style="background-color: #ff0000; color: #ffffff;">Seçilen Renk: #ff0000</button>
                 <input type="color" id="colorPicker" value="#ff0000" oninput="updateSelectedColor(this.value)">
             </div>
 
-            <label>⚡ Manuel Komut / Aksiyon:</label>
-            <select id="manualAction">
-                <option value="ON">ON (Işığı Aç)</option>
-                <option value="OFF">OFF (Kapat)</option>
-                <option value="STROBE" selected>STROBE (Çakar)</option>
-                <option value="PULSE">PULSE (Nefes)</option>
-            </select>
-
-            <label>⏱️ Hız / Speed (Strobe için ms, örn: 80):</label>
+            <label>⏱️ Strobe / Efekt Hızı (ms):</label>
             <input type="number" id="effectSpeed" value="80" min="16" max="5000">
         </div>
         
-        <!-- Tam Boy Tekli Butonlar -->
-        <button class="btn-action" onclick="sendManualCommand()">Manuel Komut Gönder</button>
+        <!-- Tek Tık Çalışan Ayrı Ayrı Manuel Komut Butonları -->
+        <button class="btn-action" onclick="sendManualCommand('ON')">Işığı Aç (ON)</button>
+        <button class="btn-action" onclick="sendManualCommand('OFF')">Kapat (OFF)</button>
+        <button class="btn-action" onclick="sendManualCommand('STROBE')">Çakar Gönder (STROBE)</button>
+        <button class="btn-action" onclick="sendManualCommand('PULSE')">Nefes Efekti (PULSE)</button>
+
         <button class="btn-preload" onclick="sendTimelineShow()">🚀 Şov Senaryosunu Başlat (Timeline)</button>
         <button class="btn-stop" onclick="sendEmergencyStop()">Acil Karartma (STOP)</button>
         
@@ -201,14 +194,12 @@
 
         let selectedColorHex = "#ff0000";
 
-        // Renk seçildiğinde butonu ve arkaplanını güncelleyen fonksiyon
         window.updateSelectedColor = function(val) {
             selectedColorHex = val;
             const btn = document.getElementById('colorBtn');
             btn.style.backgroundColor = val;
             btn.innerText = `Seçilen Renk: ${val}`;
             
-            // Konttrola göre metin rengini siyah/beyaz yap
             const r = parseInt(val.substr(1,2), 16);
             const g = parseInt(val.substr(3,2), 16);
             const b = parseInt(val.substr(5,2), 16);
@@ -216,7 +207,6 @@
             btn.style.color = yiq >= 128 ? '#000000' : '#ffffff';
         };
 
-        // Canlı aktif katılımcı sayacı
         onSnapshot(collection(db, "clients"), (snapshot) => {
             let activeCount = 0;
             const now = Date.now();
@@ -231,10 +221,9 @@
             console.warn("Client sayaç dinleme hatası:", error);
         });
 
-        // 1. Manuel Komut Gönderme
-        window.sendManualCommand = async function() {
+        // Tek tıkla çalışan manuel komut gönderici
+        window.sendManualCommand = async function(action) {
             const logEl = document.getElementById('log');
-            const action = document.getElementById('manualAction').value;
             const speed = Number(document.getElementById('effectSpeed').value);
 
             try {
@@ -254,7 +243,6 @@
             }
         };
 
-        // 2. Timeline Senaryosu Gönderme
         window.sendTimelineShow = async function() {
             const logEl = document.getElementById('log');
             const showStartTime = Date.now() + 3000;
@@ -282,7 +270,6 @@
             }
         };
 
-        // 3. Acil Karartma (STOP) Gönderme
         window.sendEmergencyStop = async function() {
             const logEl = document.getElementById('log');
             try {
