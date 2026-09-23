@@ -64,38 +64,39 @@
             margin-bottom: 6px; 
             color: #8b949e; 
         }
-        
-        .color-picker-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+
+        /* Renk seçiciyi gizleyip butona tıklatıyoruz */
+        .color-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
             margin-bottom: 14px;
         }
-        input[type="color"] {
-            -webkit-appearance: none;
-            appearance: none;
-            border: none;
-            width: 44px;
-            height: 38px;
+        .color-preview-btn {
+            width: 100%;
+            padding: 12px;
             border-radius: 6px;
-            cursor: pointer;
-            background: none;
-        }
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch { border: 1px solid #30363d; border-radius: 6px; }
-
-        .color-text-display {
-            flex: 1;
-            padding: 9px 12px;
-            background: #0d1117;
             border: 1px solid #30363d;
-            border-radius: 6px;
-            color: #c9d1d9;
+            background: #ff0000;
+            color: #fff;
+            font-weight: 600;
             font-size: 14px;
-            font-family: monospace;
+            cursor: pointer;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+        }
+        .color-preview-btn:active { transform: scale(0.98); }
+        
+        input[type="color"] {
+            position: absolute;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
         }
 
-        input[type="number"] { 
+        select, input[type="number"] { 
             width: 100%; 
             padding: 10px 12px; 
             border-radius: 6px; 
@@ -106,25 +107,21 @@
             box-sizing: border-box; 
             margin-bottom: 14px; 
             outline: none;
+            appearance: none;
+            -webkit-appearance: none;
         }
-        input[type="number"]:focus { border-color: #58a6ff; }
-
-        .button-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
+        select:focus, input[type="number"]:focus { border-color: #58a6ff; }
 
         button { 
             width: 100%; 
-            padding: 12px; 
-            font-size: 14px; 
+            padding: 14px; 
+            font-size: 15px; 
             font-weight: 600; 
             border: none; 
             border-radius: 6px; 
             cursor: pointer; 
             color: #fff; 
+            margin-bottom: 12px;
             transition: opacity 0.2s, transform 0.1s;
         }
         button:active { transform: scale(0.98); }
@@ -132,10 +129,10 @@
         .btn-action { background: #238636; }
         .btn-action:hover { background: #2ea043; }
 
-        .btn-preload { background: #1f6feb; width: 100%; margin-bottom: 12px; }
+        .btn-preload { background: #1f6feb; }
         .btn-preload:hover { background: #388bfd; }
 
-        .btn-stop { background: #da3633; width: 100%; margin-bottom: 12px; }
+        .btn-stop { background: #da3633; margin-bottom: 0; }
         .btn-stop:hover { background: #f85149; }
 
         #log { 
@@ -159,24 +156,26 @@
         </div>
 
         <div class="control-group">
-            <label>🎨 Efekt Rengi Seç:</label>
-            <div class="color-picker-wrapper">
-                <input type="color" id="colorPicker" value="#ff0000" oninput="updateColorText(this.value)">
-                <input type="text" id="effectColor" class="color-text-display" value="#ff0000" readonly>
+            <label>🎨 Efekt Rengi (Tıkla ve Seç):</label>
+            <div class="color-btn-wrapper">
+                <button type="button" id="colorBtn" class="color-preview-btn">Seçilen Renk: #ff0000</button>
+                <input type="color" id="colorPicker" value="#ff0000" oninput="updateSelectedColor(this.value)">
             </div>
 
-            <label>⏱️ Strobe / Efekt Hızı (ms):</label>
+            <label>⚡ Manuel Komut / Aksiyon:</label>
+            <select id="manualAction">
+                <option value="ON">ON (Işığı Aç)</option>
+                <option value="OFF">OFF (Kapat)</option>
+                <option value="STROBE" selected>STROBE (Çakar)</option>
+                <option value="PULSE">PULSE (Nefes)</option>
+            </select>
+
+            <label>⏱️ Hız / Speed (Strobe için ms, örn: 80):</label>
             <input type="number" id="effectSpeed" value="80" min="16" max="5000">
         </div>
         
-        <!-- Ayrı Ayrı Manuel Aksiyon Butonları -->
-        <div class="button-grid">
-            <button class="btn-action" onclick="sendManualCommand('ON')">Işığı Aç (ON)</button>
-            <button class="btn-action" onclick="sendManualCommand('OFF')">Kapat (OFF)</button>
-            <button class="btn-action" onclick="sendManualCommand('STROBE')">Çakar (STROBE)</button>
-            <button class="btn-action" onclick="sendManualCommand('PULSE')">Nefes (PULSE)</button>
-        </div>
-
+        <!-- Tam Boy Tekli Butonlar -->
+        <button class="btn-action" onclick="sendManualCommand()">Manuel Komut Gönder</button>
         <button class="btn-preload" onclick="sendTimelineShow()">🚀 Şov Senaryosunu Başlat (Timeline)</button>
         <button class="btn-stop" onclick="sendEmergencyStop()">Acil Karartma (STOP)</button>
         
@@ -200,9 +199,21 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Renk seçici senkronizasyonu
-        window.updateColorText = function(val) {
-            document.getElementById('effectColor').value = val;
+        let selectedColorHex = "#ff0000";
+
+        // Renk seçildiğinde butonu ve arkaplanını güncelleyen fonksiyon
+        window.updateSelectedColor = function(val) {
+            selectedColorHex = val;
+            const btn = document.getElementById('colorBtn');
+            btn.style.backgroundColor = val;
+            btn.innerText = `Seçilen Renk: ${val}`;
+            
+            // Konttrola göre metin rengini siyah/beyaz yap
+            const r = parseInt(val.substr(1,2), 16);
+            const g = parseInt(val.substr(3,2), 16);
+            const b = parseInt(val.substr(5,2), 16);
+            const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+            btn.style.color = yiq >= 128 ? '#000000' : '#ffffff';
         };
 
         // Canlı aktif katılımcı sayacı
@@ -220,10 +231,10 @@
             console.warn("Client sayaç dinleme hatası:", error);
         });
 
-        // 1. Ayrı Butonlarla Manuel Komut Gönderme
-        window.sendManualCommand = async function(action) {
+        // 1. Manuel Komut Gönderme
+        window.sendManualCommand = async function() {
             const logEl = document.getElementById('log');
-            const color = document.getElementById('effectColor').value.trim();
+            const action = document.getElementById('manualAction').value;
             const speed = Number(document.getElementById('effectSpeed').value);
 
             try {
@@ -231,10 +242,10 @@
                     triggerId: crypto.randomUUID(),
                     startTime: Date.now() + 1500,
                     action: action,
-                    color: color,
+                    color: selectedColorHex,
                     speed: speed
                 });
-                logEl.innerText = `Komut Gönderildi: ${action} (${color})`;
+                logEl.innerText = `Komut Gönderildi: ${action} (${selectedColorHex})`;
                 logEl.style.color = "#3fb950";
             } catch (err) {
                 console.error("Manuel komut hatası:", err);
