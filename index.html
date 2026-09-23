@@ -5,26 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumen Sync - Yönetici Paneli</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px; margin: 0; }
-        .container { max-width: 450px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2 { color: #ff9800; margin-bottom: 10px; }
-        .counter-box { background: #2c2c2c; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 16px; border: 1px solid #444; }
-        .counter-box span { color: #4CAF50; font-weight: bold; font-size: 20px; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background: #0d1117; 
+            color: #c9d1d9; 
+            text-align: center; 
+            padding: 20px; 
+            margin: 0; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container { 
+            width: 100%;
+            max-width: 420px; 
+            background: #161b22; 
+            padding: 24px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6); 
+            border: 1px solid #30363d;
+            box-sizing: border-box;
+        }
+        h2 { 
+            color: #58a6ff; 
+            margin-top: 0;
+            margin-bottom: 20px; 
+            font-size: 22px;
+            letter-spacing: -0.5px;
+        }
+        .counter-box { 
+            background: #21262d; 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            font-size: 15px; 
+            border: 1px solid #30363d;
+            color: #8b949e;
+        }
+        .counter-box span { 
+            color: #3fb950; 
+            font-weight: 700; 
+            font-size: 18px; 
+        }
         
-        .control-group { background: #2c2c2c; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: left; border: 1px solid #444; }
-        .control-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #ccc; }
-        input[type="text"], select, input[type="number"] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #555; background: #1e1e1e; color: #fff; box-sizing: border-box; margin-bottom: 10px; }
+        .control-group { 
+            background: #21262d; 
+            padding: 16px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            text-align: left; 
+            border: 1px solid #30363d; 
+        }
+        .control-group label { 
+            display: block; 
+            font-size: 13px; 
+            font-weight: 600; 
+            margin-bottom: 6px; 
+            color: #8b949e; 
+        }
+        input[type="text"], select, input[type="number"] { 
+            width: 100%; 
+            padding: 10px 12px; 
+            border-radius: 6px; 
+            border: 1px solid #30363d; 
+            background: #0d1117; 
+            color: #c9d1d9; 
+            font-size: 14px;
+            box-sizing: border-box; 
+            margin-bottom: 14px; 
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, select:focus, input[type="number"]:focus {
+            border-color: #58a6ff;
+        }
         
-        button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; color: #fff; }
-        .btn-preload { background: #ff5722; }
-        .btn-manual { background: #4CAF50; }
-        .btn-stop { background: #f44336; }
-        #log { margin-top: 10px; font-size: 14px; color: #aaa; word-break: break-word; }
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            font-size: 15px; 
+            font-weight: 600; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            margin-bottom: 12px; 
+            color: #fff; 
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+        
+        .btn-manual { background: #238636; }
+        .btn-manual:hover { background: #2ea043; }
+
+        .btn-preload { background: #1f6feb; }
+        .btn-preload:hover { background: #388bfd; }
+
+        .btn-stop { background: #da3633; }
+        .btn-stop:hover { background: #f85149; }
+
+        #log { 
+            margin-top: 15px; 
+            font-size: 13px; 
+            color: #8b949e; 
+            word-break: break-word; 
+            padding: 8px;
+            background: #0d1117;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🎛️ Lumen Sync Admin</h2>
+        <h2>⚡ Lumen Sync Admin</h2>
         
         <div class="counter-box">
             👥 Aktif Katılımcı: <span id="client-count">0</span>
@@ -50,7 +144,7 @@
         <button class="btn-preload" onclick="sendTimelineShow()">🚀 Şov Senaryosunu Başlat (Timeline)</button>
         <button class="btn-stop" onclick="sendEmergencyStop()">Acil Karartma (STOP)</button>
         
-        <div id="log">Durum: Bekleniyor...</div>
+        <div id="log">Durum: Sistem hazır.</div>
     </div>
 
     <script type="module">
@@ -70,7 +164,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Canlı aktif katılımcı sayacı (Son 60 saniyede sinyal verenler)
+        // Canlı aktif katılımcı sayacı
         onSnapshot(collection(db, "clients"), (snapshot) => {
             let activeCount = 0;
             const now = Date.now();
@@ -95,29 +189,29 @@
             try {
                 await setDoc(doc(db, "show", "command"), {
                     triggerId: crypto.randomUUID(),
-                    startTime: Date.now() + 2000, // 2 saniye sonra senkron başlar
+                    startTime: Date.now() + 2000,
                     action: action,
                     color: color,
                     speed: speed
                 });
                 logEl.innerText = `Manuel Komut Gönderildi: ${action} (${color})`;
-                logEl.style.color = "#4CAF50";
+                logEl.style.color = "#3fb950";
             } catch (err) {
                 console.error("Manuel komut hatası:", err);
-                logEl.innerText = "Hata! Komut iletilemedi: " + err.message;
-                logEl.style.color = "#f44336";
+                logEl.innerText = "Hata! Komut iletilemedi.";
+                logEl.style.color = "#f85149";
             }
         };
 
         // 2. Timeline Senaryosu Gönderme
         window.sendTimelineShow = async function() {
             const logEl = document.getElementById('log');
-            const showStartTime = Date.now() + 3000; // 3 saniye sonra başlar
+            const showStartTime = Date.now() + 3000;
 
             const sampleTimeline = [
                 { timeOffset: 0,     action: 'ON',     color: '#ff0000' },
                 { timeOffset: 5000,  action: 'STROBE', color: '#ffffff', speed: 80 },
-                { timeOffset: 12000, action: 'PULSE',  color: 'rgb(0, 0, 255)' },
+                { timeOffset: 12000, action: 'PULSE',  color: 'rgb(0, 120, 255)' },
                 { timeOffset: 20000, action: 'OFF',    color: '#000000' }
             ];
 
@@ -129,11 +223,11 @@
                     timeline: sampleTimeline
                 });
                 logEl.innerText = "Şov Senaryosu (Timeline) Dağıtıldı!";
-                logEl.style.color = "#ff5722";
+                logEl.style.color = "#58a6ff";
             } catch (err) {
                 console.error("Timeline şov hatası:", err);
-                logEl.innerText = "Hata! Senaryo gönderilemedi: " + err.message;
-                logEl.style.color = "#f44336";
+                logEl.innerText = "Hata! Senaryo gönderilemedi.";
+                logEl.style.color = "#f85149";
             }
         };
 
@@ -147,11 +241,11 @@
                     startTime: Date.now()
                 });
                 logEl.innerText = "Acil Karartma (STOP) Gönderildi!";
-                logEl.style.color = "#f44336";
+                logEl.style.color = "#f85149";
             } catch (err) {
                 console.error("STOP komut hatası:", err);
-                logEl.innerText = "Hata! Durdurulamadı: " + err.message;
-                logEl.style.color = "#f44336";
+                logEl.innerText = "Hata! Durdurulamadı.";
+                logEl.style.color = "#f85149";
             }
         };
     </script>
