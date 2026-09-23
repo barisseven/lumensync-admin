@@ -13,7 +13,7 @@
         
         .control-group { background: #2c2c2c; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: left; border: 1px solid #444; }
         .control-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #ccc; }
-        input[type="color"], select, input[type="number"] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #555; background: #1e1e1e; color: #fff; box-sizing: border-box; margin-bottom: 10px; }
+        input[type="text"], select, input[type="number"] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #555; background: #1e1e1e; color: #fff; box-sizing: border-box; margin-bottom: 10px; }
         
         button { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; color: #fff; }
         .btn-preload { background: #ff5722; }
@@ -34,7 +34,7 @@
             <label>🎨 Efekt Rengi (HEX / RGB / RGBA):</label>
             <input type="text" id="effectColor" value="rgb(255, 0, 0)">
 
-            <label>⚡ Manuel Komut / Başlangıç Aksiyonu:</label>
+            <label>⚡ Manuel Komut / Aksiyon:</label>
             <select id="manualAction">
                 <option value="ON">ON (Işığı Aç)</option>
                 <option value="OFF">OFF (Kapat)</option>
@@ -74,26 +74,28 @@
         onSnapshot(collection(db, "clients"), (snapshot) => {
             let activeCount = 0;
             const now = Date.now();
-            snapshot.forEach((doc) => {
-                const data = doc.data();
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
                 if (data.lastSeen && (now - data.lastSeen < 60000)) {
                     activeCount++;
                 }
             });
             document.getElementById('client-count').innerText = activeCount;
+        }, (error) => {
+            console.warn("Client sayaç dinleme hatası:", error);
         });
 
-        // 1. Manuel Anlık Komut Gönderme
+        // 1. Manuel Komut Gönderme
         window.sendManualCommand = async function() {
             const logEl = document.getElementById('log');
-            const color = document.getElementById('effectColor').value;
+            const color = document.getElementById('effectColor').value.trim();
             const action = document.getElementById('manualAction').value;
             const speed = Number(document.getElementById('effectSpeed').value);
 
             try {
                 await setDoc(doc(db, "show", "command"), {
                     triggerId: crypto.randomUUID(),
-                    startTime: Date.now() + 2000, // 2 saniye sonra senkronize başlar
+                    startTime: Date.now() + 2000, // 2 saniye sonra senkron başlar
                     action: action,
                     color: color,
                     speed: speed
@@ -101,23 +103,21 @@
                 logEl.innerText = `Manuel Komut Gönderildi: ${action} (${color})`;
                 logEl.style.color = "#4CAF50";
             } catch (err) {
-                console.error(err);
-                logEl.innerText = "Hata! Komut iletilemedi.";
+                console.error("Manuel komut hatası:", err);
+                logEl.innerText = "Hata! Komut iletilemedi: " + err.message;
                 logEl.style.color = "#f44336";
             }
         };
 
-        // 2. Önceden Yüklenen Şov Senaryosu (Timeline) Gönderme
+        // 2. Timeline Senaryosu Gönderme
         window.sendTimelineShow = async function() {
             const logEl = document.getElementById('log');
-            
-            // Katılımcıların senaryoyu indirip hazır olması için 3 saniye geleceğe planlıyoruz
-            const showStartTime = Date.now() + 3000;
+            const showStartTime = Date.now() + 3000; // 3 saniye sonra başlar
 
             const sampleTimeline = [
                 { timeOffset: 0,     action: 'ON',     color: '#ff0000' },
                 { timeOffset: 5000,  action: 'STROBE', color: '#ffffff', speed: 80 },
-                { timeOffset: 12000, action: 'PULSE',  color: '#0000ff' },
+                { timeOffset: 12000, action: 'PULSE',  color: 'rgb(0, 0, 255)' },
                 { timeOffset: 20000, action: 'OFF',    color: '#000000' }
             ];
 
@@ -125,19 +125,19 @@
                 await setDoc(doc(db, "show", "command"), {
                     triggerId: crypto.randomUUID(),
                     startTime: showStartTime,
-                    duration: 25000, // 25 saniye toplam şov süresi
+                    duration: 25000,
                     timeline: sampleTimeline
                 });
-                logEl.innerText = "Şov Senaryosu (Timeline) Tüm Cihazlara Dağıtıldı!";
+                logEl.innerText = "Şov Senaryosu (Timeline) Dağıtıldı!";
                 logEl.style.color = "#ff5722";
             } catch (err) {
-                console.error(err);
-                logEl.innerText = "Hata! Senaryo gönderilemedi.";
+                console.error("Timeline şov hatası:", err);
+                logEl.innerText = "Hata! Senaryo gönderilemedi: " + err.message;
                 logEl.style.color = "#f44336";
             }
         };
 
-        // 3. Acil Durdurma (STOP) Komutu
+        // 3. Acil Karartma (STOP) Gönderme
         window.sendEmergencyStop = async function() {
             const logEl = document.getElementById('log');
             try {
@@ -149,8 +149,8 @@
                 logEl.innerText = "Acil Karartma (STOP) Gönderildi!";
                 logEl.style.color = "#f44336";
             } catch (err) {
-                console.error(err);
-                logEl.innerText = "Hata! Durdurulamadı.";
+                console.error("STOP komut hatası:", err);
+                logEl.innerText = "Hata! Durdurulamadı: " + err.message;
                 logEl.style.color = "#f44336";
             }
         };
